@@ -9,10 +9,11 @@ repository = "https://github.com/nervosnetwork/merkle-mountain-range"
 
 [features]
 default = ["std"]
-std = []
+std = ["bytes/std"]
 
 [dependencies]
 cfg-if = "1.0"
+bytes = { version = "1.4.0", default-features = false }
 
 [dev-dependencies]
 faster-hex = "0.6.1"
@@ -20,7 +21,6 @@ criterion = "0.4.0"
 rand = "0.8.5"
 proptest = "1.0.0"
 lazy_static = "1.4.0"
-bytes = "1.2.1"
 blake2b-rs = "0.2.0"
 
 [[bench]]

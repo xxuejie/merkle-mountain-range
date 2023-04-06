@@ -7,6 +7,7 @@ use crate::{
     util::MemStore,
     MMR,
 };
+use bytes::Bytes;
 use proptest::prelude::*;
 
 fn build_compiled_proof(
@@ -77,7 +78,7 @@ proptest! {
     fn test_packed_compiled_proof((count, test_leaves) in leaves(10, 1000)) {
         let (compiled_proof, root, mmr_size, leaves) = build_compiled_proof(count, test_leaves);
 
-        let proof_data: Vec<u8> = pack_compiled_merkle_proof(&compiled_proof).expect("serialize");
+        let proof_data: Bytes = pack_compiled_merkle_proof(&compiled_proof).expect("serialize").into();
         let mut packed_proof: PackedMerkleProof<NumberHash> =
             PackedMerkleProof::new(&proof_data);
 
@@ -94,11 +95,11 @@ proptest! {
     fn test_packed_leaves((count, test_leaves) in leaves(10, 1000)) {
         let (compiled_proof, root, mmr_size, leaves) = build_compiled_proof(count, test_leaves);
 
-        let proof_data: Vec<u8> = pack_compiled_merkle_proof(&compiled_proof).expect("serialize");
+        let proof_data: Bytes = pack_compiled_merkle_proof(&compiled_proof).expect("serialize").into();
         let mut packed_proof: PackedMerkleProof<NumberHash> =
             PackedMerkleProof::new(&proof_data);
 
-        let leaves_data = pack_leaves(&leaves).expect("pack leaves");
+        let leaves_data: Bytes = pack_leaves(&leaves).expect("pack leaves").into();
         let mut packed_leaves = PackedLeaves::new(&leaves_data);
 
         let result = verify::<_, MergeNumberHash, _, _>(

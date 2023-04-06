@@ -5,13 +5,14 @@ use crate::{
     vec::Vec,
     Error, Merge, Result,
 };
+use bytes::Bytes;
 use core::fmt::Debug;
 use core::marker::PhantomData;
 use core::ops::RangeInclusive;
 
 pub trait Packable: Sized {
     fn pack(&self) -> Result<Vec<u8>>;
-    fn unpack(data: &[u8]) -> Result<(Self, usize)>;
+    fn unpack(data: &Bytes) -> Result<(Self, usize)>;
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -215,12 +216,12 @@ pub fn pack_leaves<T: Packable>(leaves: &[(u64, T)]) -> Result<Vec<u8>> {
 
 pub struct PackedMerkleProof<'a, T> {
     index: usize,
-    data: &'a [u8],
+    data: &'a Bytes,
     merge: PhantomData<T>,
 }
 
 impl<'a, T> PackedMerkleProof<'a, T> {
-    pub fn new(data: &'a [u8]) -> Self {
+    pub fn new(data: &'a Bytes) -> Self {
         Self {
             index: 0,
             data,
@@ -242,7 +243,7 @@ impl<'a, T: Packable> Iterator for PackedMerkleProof<'a, T> {
 
         match command {
             1u8 => Some(Ok(Command::NextLeaf)),
-            2u8 => match T::unpack(&self.data[self.index..]) {
+            2u8 => match T::unpack(&self.data.slice(self.index..)) {
                 Ok((proof, size)) => {
                     self.index += size;
                     Some(Ok(Command::Proof(proof)))
@@ -259,12 +260,12 @@ impl<'a, T: Packable> Iterator for PackedMerkleProof<'a, T> {
 
 pub struct PackedLeaves<'a, T> {
     index: usize,
-    data: &'a [u8],
+    data: &'a Bytes,
     t: PhantomData<T>,
 }
 
 impl<'a, T> PackedLeaves<'a, T> {
-    pub fn new(data: &'a [u8]) -> Self {
+    pub fn new(data: &'a Bytes) -> Self {
         Self {
             index: 0,
             data,
@@ -287,12 +288,12 @@ impl<'a, T: Packable> Iterator for PackedLeaves<'a, T> {
 
         let pos = {
             let mut buf = [0u8; 8];
-            buf.copy_from_slice(&self.data[self.index..self.index + 8]);
+            buf.copy_from_slice(&self.data.slice(self.index..self.index + 8));
             u64::from_le_bytes(buf)
         };
         self.index += 8;
 
-        match T::unpack(&self.data[self.index..]) {
+        match T::unpack(&self.data.slice(self.index..)) {
             Ok((item, size)) => {
                 self.index += size;
                 Some(Ok((pos, item)))

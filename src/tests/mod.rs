@@ -29,7 +29,7 @@ impl Packable for NumberHash {
         Ok(self.0.to_vec())
     }
 
-    fn unpack(data: &[u8]) -> Result<(Self, usize)> {
+    fn unpack(data: &Bytes) -> Result<(Self, usize)> {
         if data.len() < 32 {
             return Err(Error::UnpackEof);
         }
